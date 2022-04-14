@@ -39,16 +39,14 @@ def main():
             print("error",i)
             error_list.append(i)
             pass
-    text_create('error_list',error_list)
+    text_create('scores_error_list',error_list)
 
 def text_create(name, msg):
     desktop_path = r'E:\pycharm\pythonProject\venv'
-    full_path = desktop_path + name + '.txt'  # 也可以创建一个.doc的word文档
+    full_path = desktop_path + name + '.txt'
     file = open(full_path, 'w')
     file.write(msg)
     file.close()
-
-
 
 
 def askurl(url):

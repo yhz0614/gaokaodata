@@ -8,6 +8,8 @@ from selenium.common.exceptions import NoSuchElementException   # 页面跳转�
 import xlwt  # 存入excel
 import xlrd
 import time
+import random
+import os
 # 创建全局列表存储信息
 # 创建正则表达式对象
 major=re.compile(r'<td>(.*)<td>')  #  专业类别
@@ -23,6 +25,7 @@ for i in range(4):
 print("excel创建成功")
 def main():
     line_num=1
+    error_list=[]
     baseurl = 'https://www.gaokao.cn/school/'
     # 1.爬取网页
     for i in range(30, 3100):
@@ -32,27 +35,36 @@ def main():
             print(i)
         #2.获取并解析数据
             university_data,ma_major,lt_major=parerdata(i,datas)
-            time.sleep(1)
+            time.sleep(random.randint(3,10))
+            print(lt_major)
             a=savedata(university_data,ma_major,lt_major,line_num)
             line_num=a
             excelfile.save("universitydata.xls")
             if i%100==0:
                 print("100所学校数据保存成功")
         except:
-            print(i,end='')
-            print("has problem")
+            error_num=i+' '
+            error_list.append(error_num)
             pass
-        continue
+
+    text_create('name_error_list',error_list)
+
+def text_create(name, msg):
+    desktop_path = r'E:\pycharm\pythonProject\venv'
+    full_path = desktop_path + name + '.txt'
+    file = open(full_path, 'w')
+    file.write(msg)
+    file.close()
 
 #打开网页爬取数据
 def askurl(url):
     chrome_options = Options()
-    chrome_options.add_argument('--headless')
+    # chrome_options.add_argument('--headless')
     driver = webdriver.Chrome(executable_path=r'E:\Program Files\chromedriver.exe', options=chrome_options)
     driver.get(url)
-    time.sleep(2)
+    time.sleep(random.randint(3,15))
     driver.find_element_by_xpath('//ul//span[text()="开设专业"]').click()
-    time.sleep(2)
+    time.sleep(random.randint(5,15))
     gradepage = driver.page_source
     return gradepage
 #解析并保存数据
@@ -101,7 +113,8 @@ def parerdata(x,data):
         t=[]
         for i in range(0,len(r)):
             a=r[i]
-            t.append(a[0])
+            rename=a[0]+' '
+            t.append(rename)
         major_name.append(t)
     return un_data,main_major,major_name
 
