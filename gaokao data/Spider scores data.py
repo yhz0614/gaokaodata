@@ -7,8 +7,6 @@ import time
 import random
 import xlwt
 import os
-from selenium.webdriver.support.select import Select
-from selenium.webdriver.common.action_chains import ActionChains
 #创建excel
 excelfile = xlwt.Workbook(encoding="utf-8", style_compression=0)
 excelsheet = excelfile.add_sheet('sheet1', cell_overwrite_ok=True)
@@ -27,7 +25,7 @@ def main():
     error_list=[]
     baseurl = 'https://www.gaokao.cn/school/'
     # 1.爬取网页
-    for i in range(30, 2000):
+    for i in range(31, 2000): #  跳过北京理工大学（数据爬取有问题）
         try:
             url=baseurl+str(i)
             un_name,info_63,info_12,info_old=askurl(url)
@@ -35,7 +33,7 @@ def main():
             x=save_excel(name,total,line_num)
             line_num=x
             excelfile.save("gaokao scores.xlsx")
-        except :
+        except:
             print("error",i)
             error_list.append(i)
             pass
@@ -53,24 +51,33 @@ def askurl(url):
     info_63=[] #6选3省份
     info_12=[] #3+2+1省份
     info_old=[] #老高考省份
+    user_agent='user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"'
     chrome_options = Options()
+    chrome_options.add_argument('-headless')
+    chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
+    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
+    chrome_options.add_argument('lang=zh_CN.UTF-8')
+    chrome_options.add_argument('--user-agent=%s' % user_agent)
     driver = webdriver.Chrome(executable_path=r'E:\Program Files\chromedriver.exe', options=chrome_options)
     driver.get(url)
-    driver.maximize_window()
     time.sleep(random.randint(3,10))
     driver.find_element_by_xpath('//ul//span[text()="历年分数"]').click()
-    time.sleep(random.randint(5,15))
+    time.sleep(random.randint(3,10))
+    driver.find_element_by_xpath('//*[@id="proline"]/div[1]/div/div[1]/div/div/span').click()
+    time.sleep(random.randint(5, 10))
+    driver.find_element_by_xpath('//ul//li[text()="北京"]').click()
+    time.sleep(random.randint(3, 10))
     maininformation=driver.page_source
     info_63.append(maininformation)
     pages='//*[@class="ant-select-dropdown-menu-item"]'
     for i in range(1,30): #跳过新疆，吉林
-        if i==6 or i==8:
+        if i==6  or i==8:
             continue
         page=pages+str([i])
         driver.find_element_by_xpath('//*[@id="proline"]/div[1]/div/div[1]/div/div/span').click()
         time.sleep(random.randint(5,10))
         driver.find_element_by_xpath(page).click()
-        time.sleep(random.randint(3,10))
+        time.sleep(random.randint(5,10))
         html_1=driver.page_source
         if  i==1 or i==10 or i==14 or i==20:
             info_63.append(html_1)
