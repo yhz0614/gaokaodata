@@ -18,7 +18,7 @@ print("excel创建成功")
 university_name=re.compile(r'<span class="line1-schoolName" style="color: white;">(.*)</span>')  # 学校名称
 stu_pl=re.compile(r'">([\u4E00-\u9FFF]*)</div>')  # 考生所在省份
 scores=re.compile(r'<td>(\d{3}[/](\d{1,})?[-]?)</td>')   # 高考成绩
-other=re.compile(r'>(([\u4E00-\u9FFF]*?)[A-Z]?[/]?[，]?([\u4E00-\u9FFF]*?)([(][0-9][\u4E00-\u9FFF][0-9][)])?)</td>')  # 其他信息
+other=re.compile(r'>(([\u4E00-\u9FFF]*?)[A-Z]?[/]?([\u4E00-\u9FFF]*?)[/]?([\u4E00-\u9FFF]*?)[，]?([\u4E00-\u9FFF]*?)([(][0-9][\u4E00-\u9FFF][0-9][)])?)</td>')  # 其他信息
 subject_type=re.compile(r'<div class="ant-select-selection-selected-value" style="display: block; opacity: 1;" title="([\u4E00-\u9FFF]*)">')  # 选科大类
 def main():
     line_num = 1
@@ -26,13 +26,15 @@ def main():
     baseurl = 'https://www.gaokao.cn/school/'
     # 1.爬取网页
     for i in range(31, 2000): #  跳过北京理工大学（数据爬取有问题）
+        if i==32:
+            continue
         try:
             url=baseurl+str(i)
             un_name,info_63,info_12,info_old=askurl(url)
             name,total=pardata(un_name,info_63,info_12,info_old)
             x=save_excel(name,total,line_num)
             line_num=x
-            excelfile.save("gaokao scores.xlsx")
+            excelfile.save("gaokao scores.xls")
         except:
             print("error",i)
             error_list.append(i)
@@ -53,7 +55,7 @@ def askurl(url):
     info_old=[] #老高考省份
     user_agent='user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"'
     chrome_options = Options()
-    chrome_options.add_argument('-headless')
+    # chrome_options.add_argument('-headless')
     chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument('lang=zh_CN.UTF-8')
@@ -88,16 +90,16 @@ def askurl(url):
             if i==2 or i==5 or i==9 or i==12 or i==16 or i==17 or i==18 or i==21:
                 textname=textname+'"历史类"]'
                 driver.find_element_by_xpath('//*[@id="proline"]/div[1]/div/div[3]/div/div/span').click()
-                time.sleep(random.randint(3,10))
+                time.sleep(random.randint(5,10))
                 driver.find_element_by_xpath(textname).click()
-                time.sleep(random.randint(3,10))
+                time.sleep(random.randint(5,10))
                 html_2 = driver.page_source
                 html_all.append(html_2)
                 info_12.append(html_all)
             else:
                 textname=textname+'"文科"]'
                 driver.find_element_by_xpath('//*[@id="proline"]/div[1]/div/div[3]/div/div/span').click()
-                time.sleep(random.randint(3,10))
+                time.sleep(random.randint(5,10))
                 driver.find_element_by_xpath(textname).click()
                 time.sleep(random.randint(3,10))
                 html_2=driver.page_source
