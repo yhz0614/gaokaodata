@@ -18,28 +18,25 @@ print("excel创建成功")
 university_name=re.compile(r'<span class="line1-schoolName" style="color: white;">(.*)</span>')  # 学校名称
 stu_pl=re.compile(r'">([\u4E00-\u9FFF]*)</div>')  # 考生所在省份
 scores=re.compile(r'<td>(\d{3}[/](\d{1,})?[-]?)</td>')   # 高考成绩
-other=re.compile(r'>(([\u4E00-\u9FFF]*?)[A-Z]?[/]?([\u4E00-\u9FFF]*?)[/]?([\u4E00-\u9FFF]*?)[，]?([\u4E00-\u9FFF]*?)([(][0-9][\u4E00-\u9FFF][0-9][)])?)</td>')  # 其他信息
+other=re.compile(r'>(([\u4E00-\u9FFF]*?)[A-Z]?[，]?[/]?([\u4E00-\u9FFF]*?)[/]?[、]?([\u4E00-\u9FFF]*?)[，]?([\u4E00-\u9FFF]*?)([(][0-9][\u4E00-\u9FFF]*[0-9]?[)])?)</td>')  # 其他信息
 subject_type=re.compile(r'<div class="ant-select-selection-selected-value" style="display: block; opacity: 1;" title="([\u4E00-\u9FFF]*)">')  # 选科大类
 def main():
     line_num = 1
     error_list=[]
     baseurl = 'https://www.gaokao.cn/school/'
     # 1.爬取网页
-    for i in range(31, 2000): #  跳过北京理工大学（数据爬取有问题）
-        if i==32:
-            continue
-        try:
+    for i in range(86, 2000): #  跳过北京理工大学（数据爬取有问题）
             url=baseurl+str(i)
             un_name,info_63,info_12,info_old=askurl(url)
             name,total=pardata(un_name,info_63,info_12,info_old)
             x=save_excel(name,total,line_num)
             line_num=x
             excelfile.save("gaokao scores.xls")
-        except:
-            print("error",i)
-            error_list.append(i)
-            pass
-    text_create('scores_error_list',error_list)
+        # except:
+        #     print("error",i)
+        #     error_list.append(i)
+    #         pass
+    # text_create('scores_error_list',error_list)
 
 def text_create(name, msg):
     desktop_path = r'E:\pycharm\pythonProject\venv'
@@ -91,20 +88,26 @@ def askurl(url):
                 textname=textname+'"历史类"]'
                 driver.find_element_by_xpath('//*[@id="proline"]/div[1]/div/div[3]/div/div/span').click()
                 time.sleep(random.randint(5,10))
-                driver.find_element_by_xpath(textname).click()
-                time.sleep(random.randint(5,10))
-                html_2 = driver.page_source
-                html_all.append(html_2)
-                info_12.append(html_all)
+                try:
+                    driver.find_element_by_xpath(textname).click()
+                    time.sleep(random.randint(5,10))
+                    html_2 = driver.page_source
+                    html_all.append(html_2)
+                    info_12.append(html_all)
+                except:
+                    pass
             else:
                 textname=textname+'"文科"]'
                 driver.find_element_by_xpath('//*[@id="proline"]/div[1]/div/div[3]/div/div/span').click()
                 time.sleep(random.randint(5,10))
-                driver.find_element_by_xpath(textname).click()
-                time.sleep(random.randint(3,10))
-                html_2=driver.page_source
-                html_all.append(html_2)
-                info_old.append(html_all)
+                try:
+                    driver.find_element_by_xpath(textname).click()
+                    time.sleep(random.randint(3,10))
+                    html_2=driver.page_source
+                    html_all.append(html_2)
+                    info_old.append(html_all)
+                except:
+                    pass
         time.sleep(random.randint(3,10))
     return maininformation,info_63,info_12,info_old
 #解析并存储数据
@@ -117,10 +120,14 @@ def pardata(un_name,info_63,info_12,info_old):
     # 1.六选三
     for i in range(len(info_63)):
         student_province, other_info, score=basic_info_process(info_63[i])
-        if i==1 or i==2 or i==3 :
+        if  i==2 or i==3 :
             all_info=data_process_2(other_info, score)
         else:
-            all_info=data_process_1(other_info, score,i)
+            try:
+                all_info=data_process_1(other_info, score,i)
+            except:
+                all_info = data_process_2(other_info, score)
+                pass
         all_info.append(student_province)
         totals.append(all_info)
     #2. 3+2+1(物理类，历史类)
@@ -137,7 +144,11 @@ def pardata(un_name,info_63,info_12,info_old):
             for r in info_12[i]:
                 student_province, other_info, score = basic_info_process(r)
                 su_type=subject(r)
-                all_info=data_process_1(other_info, score,i)
+                try:
+                    all_info=data_process_1(other_info, score,i)
+                except:
+                    all_info=data_process_2(other_info, score, i)
+                    pass
                 all_info.append(student_province)
                 all_info.append(su_type)
                 totals.append(all_info)
@@ -260,7 +271,6 @@ def save_excel(name,total,line):
     return line
 if __name__ == '__main__':
     main()
-
 
 #北京序号为0
 #爬取学校对应不同省份数据需要分新高考模式和老高考模式
