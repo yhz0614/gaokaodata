@@ -3,14 +3,16 @@ from bs4 import BeautifulSoup as bs   # 解析网页，获取数据
 import re  # 正则表达式
 from selenium import webdriver  # 获取网页信息
 from selenium.webdriver.chrome.options import Options
-from selenium.common.exceptions import WebDriverException  # 网页驱动异常
-from selenium.common.exceptions import NoSuchElementException   # 页面跳转异常
 import xlwt  # 存入excel
-import xlrd
 import time
 import random
 import os
-# 创建全局列表存储信息
+#创建一个txt文件
+desktop_path=r'E:\pycharm\pythonProject\gaokao data'
+full_path= desktop_path +'\universityName_error_list.txt'
+file=open(full_path,'w')
+file.write('error_list:')
+file.close()
 # 创建正则表达式对象
 major=re.compile(r'<td>(.*)<td>')  #  专业类别
 majors=re.compile(r'<p class="cursor major_item_name hover_style" style="float: left;">(([\u4E00-\u9FFF]*)[（]?([\u4E00-\u9FFF]*?)[（]?([\u4E00-\u9FFF]*?)[）]?([\u4E00-\u9FFF]*?)[）]?)</p><i aria-label="icon: play-circle" class="anticon anticon-play-circle"',re.S) # 专业名称
@@ -25,7 +27,6 @@ for i in range(4):
 print("excel创建成功")
 def main():
     line_num=1
-    error_list=[]
     baseurl = 'https://www.gaokao.cn/school/'
     # 1.爬取网页
     for i in range(30, 3100):
@@ -43,18 +44,9 @@ def main():
             if i%100==0:
                 print("100所学校数据保存成功")
         except:
-            error_num=i+' '
-            error_list.append(error_num)
+            print("error"+'i')
+            text_add(str(i))
             pass
-
-    text_create('name_error_list',error_list)
-
-def text_create(name, msg):
-    desktop_path = r'E:\pycharm\pythonProject\venv'
-    full_path = desktop_path + name + '.txt'
-    file = open(full_path, 'w')
-    file.write(msg)
-    file.close()
 
 #打开网页爬取数据
 def askurl(url):
@@ -128,5 +120,11 @@ def savedata(un_data,main_major,major_name,line_num):
         excelsheet.write(line_num,3,major_name[i])
         line_num=line_num+1
     return line_num
+def text_add(msg):
+    #打开文档 a+以读写模式打开
+    files = open(full_path, 'a+')
+    files.write(msg)
+    files.write('\n')
+    files.close()
 if __name__ == '__main__':
     main()
