@@ -7,6 +7,12 @@ import time
 import random
 import xlwt
 import os
+# 创建一个txt文件保存出错信息
+desktop_path=r'E:\pycharm\pythonProject\gaokao data'
+full_path= desktop_path +'\error_list.txt'
+file=open(full_path,'w')
+file.write('error:')
+file.close()
 #创建excel
 excelfile = xlwt.Workbook(encoding="utf-8", style_compression=0)
 excelsheet = excelfile.add_sheet('sheet1', cell_overwrite_ok=True)
@@ -22,41 +28,31 @@ other=re.compile(r'>(([\u4E00-\u9FFF]*?)[A-Z]?[，]?[/]?([\u4E00-\u9FFF]*?)[/]?[
 subject_type=re.compile(r'<div class="ant-select-selection-selected-value" style="display: block; opacity: 1;" title="([\u4E00-\u9FFF]*)">')  # 选科大类
 def main():
     line_num = 1
-    error_list=[]
     baseurl = 'https://www.gaokao.cn/school/'
     # 1.爬取网页
     for i in range(86, 2000): #  跳过北京理工大学（数据爬取有问题）
+        try:
             url=baseurl+str(i)
             un_name,info_63,info_12,info_old=askurl(url)
             name,total=pardata(un_name,info_63,info_12,info_old)
             x=save_excel(name,total,line_num)
             line_num=x
-            excelfile.save("gaokao scores.xls")
-        # except:
-        #     print("error",i)
-        #     error_list.append(i)
-    #         pass
-    # text_create('scores_error_list',error_list)
-
-def text_create(name, msg):
-    desktop_path = r'E:\pycharm\pythonProject\venv'
-    full_path = desktop_path + name + '.txt'
-    file = open(full_path, 'w')
-    file.write(msg)
-    file.close()
+            excelfile.save("gaokao_scores_test.xls")
+        except:
+            print("error",i)
+            text_add(str(i))
+            pass
 
 
 def askurl(url):
     info_63=[] #6选3省份
     info_12=[] #3+2+1省份
     info_old=[] #老高考省份
-    user_agent='user-agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.127 Safari/537.36"'
     chrome_options = Options()
     # chrome_options.add_argument('-headless')
     chrome_options.add_experimental_option('excludeSwitches', ['enable-automation'])
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument('lang=zh_CN.UTF-8')
-    chrome_options.add_argument('--user-agent=%s' % user_agent)
     driver = webdriver.Chrome(executable_path=r'E:\Program Files\chromedriver.exe', options=chrome_options)
     driver.get(url)
     time.sleep(random.randint(3,10))
@@ -69,7 +65,7 @@ def askurl(url):
     maininformation=driver.page_source
     info_63.append(maininformation)
     pages='//*[@class="ant-select-dropdown-menu-item"]'
-    for i in range(1,30): #跳过新疆，吉林
+    for i in range(1,31): #跳过新疆，吉林
         if i==6  or i==8:
             continue
         page=pages+str([i])
@@ -124,7 +120,7 @@ def pardata(un_name,info_63,info_12,info_old):
             all_info=data_process_2(other_info, score)
         else:
             try:
-                all_info=data_process_1(other_info, score,i)
+                all_info=data_process_1(other_info, score)
             except:
                 all_info = data_process_2(other_info, score)
                 pass
@@ -145,9 +141,9 @@ def pardata(un_name,info_63,info_12,info_old):
                 student_province, other_info, score = basic_info_process(r)
                 su_type=subject(r)
                 try:
-                    all_info=data_process_1(other_info, score,i)
+                    all_info=data_process_1(other_info, score)
                 except:
-                    all_info=data_process_2(other_info, score, i)
+                    all_info=data_process_2(other_info, score)
                     pass
                 all_info.append(student_province)
                 all_info.append(su_type)
@@ -184,37 +180,38 @@ def basic_info_process(page): #基本信息处理
             other_info = re.findall(other, items)  # 其他信息
             score = re.findall(scores, items)  # 分数
     return student_province,other_info,score
-def data_process_1(other,score,i):
+def data_process_1(other,score):
+    all_info=[]
+    for i in range(1,len(score)+1):
+        b=[]
+        t=score[i-1]
+        b.append(t[0])
+        x=other[i*3-3]
+        b.append(x[0])
+        y=other[i*3-2]
+        b.append(y[0])
+        z=other[i*3-1]
+        b.append(z[0])
+        all_info.append(b)
+    return all_info
+def data_process_2(other,score):
     all_info=[]
     try:
         for i in range(1,len(score)+1):
             b=[]
             t=score[i-1]
             b.append(t[0])
-            x=other[i*3-3]
+            x=other[i*2-2]
             b.append(x[0])
-            y=other[i*3-2]
+            y=other[i*2-1]
             b.append(y[0])
-            z=other[i*3-1]
-            b.append(z[0])
             all_info.append(b)
         return all_info
-    except Exception:
-        print(other,i)
+    except:
+        print(other)
         a=["error"]
+        text_add(other)
         return a
-def data_process_2(other,score):
-    all_info=[]
-    for i in range(1,len(score)+1):
-        b=[]
-        t=score[i-1]
-        b.append(t[0])
-        x=other[i*2-2]
-        b.append(x[0])
-        y=other[i*2-1]
-        b.append(y[0])
-        all_info.append(b)
-    return all_info
 def subject(page):
     soup = bs(page, 'html.parser')
     for item in soup.find_all('div',id="proline"):
@@ -269,6 +266,14 @@ def save_excel(name,total,line):
         line=line+1
     print(name,"数据保存完毕")
     return line
+
+def text_add(msg):
+    #打开文档 a+以读写模式打开
+    files = open(full_path, 'a+')
+    files.write(msg)
+    files.write('\n')
+    files.close()
+
 if __name__ == '__main__':
     main()
 
