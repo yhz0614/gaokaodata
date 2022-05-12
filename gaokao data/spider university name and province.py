@@ -9,7 +9,7 @@ import random
 import os
 #创建一个txt文件
 desktop_path=r'E:\pycharm\pythonProject\gaokao data'
-full_path= desktop_path +'\universityName_error_list.txt'
+full_path= desktop_path +r'\universityName_error_list.txt'
 file=open(full_path,'w')
 file.write('error_list:')
 file.close()
@@ -29,7 +29,7 @@ def main():
     line_num=1
     baseurl = 'https://www.gaokao.cn/school/'
     # 1.爬取网页
-    for i in range(30, 3100):
+    for i in range(2547, 4000):
         try:
             url=baseurl+str(i)
             datas=askurl(url)
@@ -37,7 +37,6 @@ def main():
         #2.获取并解析数据
             university_data,ma_major,lt_major=parerdata(i,datas)
             time.sleep(random.randint(3,10))
-            print(lt_major)
             a=savedata(university_data,ma_major,lt_major,line_num)
             line_num=a
             excelfile.save("universitydata.xls")
@@ -51,7 +50,7 @@ def main():
 #打开网页爬取数据
 def askurl(url):
     chrome_options = Options()
-    # chrome_options.add_argument('--headless')
+    chrome_options.add_argument('--headless')
     driver = webdriver.Chrome(executable_path=r'E:\Program Files\chromedriver.exe', options=chrome_options)
     driver.get(url)
     time.sleep(random.randint(3,15))
